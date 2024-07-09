@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+    # NestJs TODO API
+    api:
+        build:
+            dockerfile: Dockerfile
+            context: .
+            # Only build develpment stage from our dockerfile
+            target: development
+        volumes:
+            - .:/app
+            - /app/node_modules
+        # dev mode: npm run dev / debug: npm run start:debug
+        command: npm run dev
+        environment:
+            DATABASE_URL: tbd
+        ports:
+            - "3000:3000"

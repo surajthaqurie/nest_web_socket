@@ -1,26 +1,28 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { ConfigService } from "@nestjs/config";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api/v1');
-  const PORT = 3000;
+    const app = await NestFactory.create(AppModule);
+    app.enableCors({ origin: true });
+    app.setGlobalPrefix("api/v1");
 
-  await app.listen(PORT, () => {
-    console.log(
-      `Server is starting on ${PORT} at ${new Date()} with process id:`,
-      process.pid,
-    );
-  });
+    const configService = app.get(ConfigService);
+    const PORT = configService.get<string>("PORT") || 3000;
+    const APP_URL = configService.get<string>("APP_URL");
 
-  process.on('SIGTERM', (): void => {
-    console.log('Server is closing at ', new Date());
-    app.close();
-  });
+    await app.listen(PORT, () => {
+        console.log(console.log(`Server is starting on ${APP_URL} at ${new Date()} with process id:`, process.pid));
+    });
 
-  process.on('SIGINT', (): void => {
-    console.log('Server is closing at ', new Date());
-    app.close();
-  });
+    process.on("SIGTERM", (): void => {
+        console.log("Server is closing at ", new Date());
+        app.close();
+    });
+
+    process.on("SIGINT", (): void => {
+        console.log("Server is closing at ", new Date());
+        app.close();
+    });
 }
 bootstrap();
