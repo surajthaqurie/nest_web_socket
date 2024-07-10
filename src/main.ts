@@ -12,7 +12,7 @@ async function bootstrap() {
     const APP_URL = configService.get<string>("APP_URL");
 
     await app.listen(PORT, () => {
-        console.log(console.log(`Server is starting on ${APP_URL} at ${new Date()} with process id:`, process.pid));
+        console.log(`Server is starting on ${APP_URL} at ${new Date()} with process id:`, process.pid);
     });
 
     process.on("SIGTERM", (): void => {
