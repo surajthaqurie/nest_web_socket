@@ -1,26 +1,84 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { CreateUserDto } from "../dto/create-user.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { User } from "../entities/user.entity";
+import { Repository } from "typeorm";
+import { AuthService } from "src/auth/services/auth.service";
+import { LoginResponseI, UserI } from "../user.interface";
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+    constructor(
+        @InjectRepository(User) private readonly userRepository: Repository<User>,
+        private authService: AuthService
+    ) {}
 
-  findAll() {
-    return `This action returns all user`;
-  }
+    async createUser(newUser: UserI): Promise<UserI> {
+        const emailExists = await this.mailExists(newUser.email);
+        const usernameExists = await this.usernameExits(newUser.username);
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+        if (emailExists === false && usernameExists === false) {
+            const passwordHash = await this.authService.hashPassword(newUser.password);
+            newUser.password = passwordHash;
+            newUser.email = newUser.email.toLowerCase();
+            newUser.username = newUser.username.toLowerCase();
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+            const user = await this.userRepository.save(this.userRepository.create(newUser));
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
+            return this.findOne(user.id);
+        } else {
+            throw new HttpException("Email or username already taken", HttpStatus.CONFLICT);
+        }
+    }
+
+    private async findOne(id: number): Promise<UserI> {
+        return this.userRepository.findOne({ where: { id } });
+    }
+
+    private async mailExists(email: string): Promise<boolean> {
+        const user = await this.userRepository.findOne({ where: { email } });
+
+        return !!user;
+    }
+
+    private async usernameExits(username: string): Promise<boolean> {
+        const user = await this.userRepository.findOne({ where: { username } });
+
+        return !!user;
+    }
+
+    async loginUser(loginDto: UserI): Promise<string> {
+        const foundUser: UserI = await this.findByEmail(loginDto.email);
+        if (foundUser) {
+            const passwordMatching = await this.authService.comparePassword(loginDto.password, foundUser.password);
+
+            if (passwordMatching == true) {
+                const payload = await this.findOne(foundUser.id);
+                return this.authService.generateJwt(payload);
+            } else {
+                throw new HttpException("Login was not success", HttpStatus.UNAUTHORIZED);
+            }
+        } else {
+            throw new HttpException("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    private findByEmail(email: string): Promise<UserI> {
+        return this.userRepository.findOne({ where: { email }, select: ["id", "email", "username", "password"] });
+    }
+    // findAll() {
+    //     return `This action returns all user`;
+    // }
+
+    // findOne(id: number) {
+    //     return `This action returns a #${id} user`;
+    // }
+
+    // update(id: number, updateUserDto: UpdateUserDto) {
+    //     return `This action updates a #${id} user`;
+    // }
+
+    // remove(id: number) {
+    //     return `This action removes a #${id} user`;
+    // }
 }
