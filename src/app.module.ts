@@ -1,10 +1,10 @@
-import { Module } from "@nestjs/common";
-import { GatewayModule } from "./gateway/gateway.module";
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from "@nestjs/common";
 import { UserModule } from "./user/user.module";
 import { TodoModule } from "./todo/todo.module";
 import { AuthModule } from "./auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { AuthMiddleware } from "./auth.middleware";
 
 @Module({
     imports: [
@@ -15,7 +15,6 @@ import { TypeOrmModule } from "@nestjs/typeorm";
             autoLoadEntities: true,
             synchronize: true
         }),
-        GatewayModule,
         UserModule,
         TodoModule,
         AuthModule
@@ -23,4 +22,20 @@ import { TypeOrmModule } from "@nestjs/typeorm";
     controllers: [],
     providers: []
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(AuthMiddleware)
+            .exclude(
+                {
+                    path: "/api/v1/users/signup",
+                    method: RequestMethod.POST
+                },
+                {
+                    path: "/api/v1/users/login",
+                    method: RequestMethod.POST
+                }
+            )
+            .forRoutes({ path: "", method: RequestMethod.ALL });
+    }
+}

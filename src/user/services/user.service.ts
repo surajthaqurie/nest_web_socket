@@ -66,19 +66,8 @@ export class UserService {
     private findByEmail(email: string): Promise<UserI> {
         return this.userRepository.findOne({ where: { email }, select: ["id", "email", "username", "password"] });
     }
-    // findAll() {
-    //     return `This action returns all user`;
-    // }
 
-    // findOne(id: number) {
-    //     return `This action returns a #${id} user`;
-    // }
-
-    // update(id: number, updateUserDto: UpdateUserDto) {
-    //     return `This action updates a #${id} user`;
-    // }
-
-    // remove(id: number) {
-    //     return `This action removes a #${id} user`;
-    // }
+    async getOneById(id: number): Promise<UserI> {
+        return this.userRepository.findOneOrFail({ where: { id } });
+    }
 }

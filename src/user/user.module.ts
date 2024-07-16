@@ -9,6 +9,7 @@ import { DtoHelperService } from "./dto/dto-helper";
 @Module({
     imports: [AuthModule, TypeOrmModule.forFeature([User])],
     controllers: [UserController],
-    providers: [UserService, DtoHelperService]
+    providers: [UserService, DtoHelperService],
+    exports: [UserService]
 })
 export class UserModule {}
