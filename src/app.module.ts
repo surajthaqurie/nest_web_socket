@@ -12,6 +12,7 @@ import { AuthMiddleware } from "./auth.middleware";
         TypeOrmModule.forRoot({
             type: "postgres",
             url: process.env.DATABASE_URL,
+            database: process.env.DATABASE_NAME,
             autoLoadEntities: true,
             synchronize: true
         }),
